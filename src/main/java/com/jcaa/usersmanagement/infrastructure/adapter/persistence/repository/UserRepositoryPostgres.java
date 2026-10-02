@@ -26,11 +26,35 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Adaptador de persistencia para PostgreSQL.
+ *
+ * <p>Implementa los mismos puertos de salida que {@link UserRepositoryMySQL}, pero con SQL
+ * adaptado al dialecto de PostgreSQL. Es un adaptador alternativo, no un reemplazo: se
+ * selecciona mediante el perfil de Spring.
+ *
+ * <p><b>Diferencias de dialecto respecto a MySQL:</b>
+ *
+ * <ul>
+ *   <li>{@code NOW()} se reemplaza por {@code CURRENT_TIMESTAMP} (estandar SQL).
+ *   <li>{@code LIMIT 1} se mantiene, pero se elimina el uso de {@code ORDER BY} implicito.
+ *   <li>La actualizacion automatica de {@code updated_at} la realiza un TRIGGER en la base de
+ *       datos (ver {@code schema-postgres.sql}), por lo que la sentencia UPDATE no lo toca.
+ *   <li>{@code role} y {@code status} son tipos ENUM nativos de PostgreSQL; se leen con {@code
+ *       getString} igual que en MySQL.
+ * </ul>
+ *
+ * <p><b>Nota sobre {@code SELECT ... LIMIT 1}:</b> en PostgreSQL {@code LIMIT} es valido, pero se
+ * prefiere {@code FETCH FIRST 1 ROW ONLY} por ser el estandar SQL:2008. Se usa esta ultima forma
+ * para maximizar la portabilidad.
+ *
+ * @see UserRepositoryMySQL
+ */
 @Slf4j
 @Repository
-@Profile("mysql")
+@Profile("postgres")
 @RequiredArgsConstructor
-public class UserRepositoryMySQL
+public class UserRepositoryPostgres
     implements SaveUserPort,
         UpdateUserPort,
         GetUserByIdPort,
@@ -41,21 +65,22 @@ public class UserRepositoryMySQL
   private static final String SQL_INSERT =
       "INSERT INTO users "
       + "(id, name, email, password, role, status, created_at, updated_at) "
-      + "VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())";
+      + "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
+  // updated_at NO se asigna aqui: lo actualiza el trigger users_set_updated_at.
   private static final String SQL_UPDATE =
-      "UPDATE users SET name = ?, email = ?, password = ?, role = ?, status = ?, updated_at = NOW() "
+      "UPDATE users SET name = ?, email = ?, password = ?, role = ?, status = ? "
       + "WHERE id = ?";
 
   private static final String SQL_SELECT_BY_ID =
       "SELECT id, name, email, password, role, status, created_at, updated_at "
       + "FROM users "
-      + "WHERE id = ? LIMIT 1";
+      + "WHERE id = ? FETCH FIRST 1 ROW ONLY";
 
   private static final String SQL_SELECT_BY_EMAIL =
       "SELECT id, name, email, password, role, status, created_at, updated_at "
       + "FROM users "
-      + "WHERE email = ? LIMIT 1";
+      + "WHERE email = ? FETCH FIRST 1 ROW ONLY";
 
   private static final String SQL_SELECT_ALL =
       "SELECT id, name, email, password, role, status, created_at, updated_at "
@@ -63,8 +88,8 @@ public class UserRepositoryMySQL
       + "ORDER BY name ASC";
 
   private static final String SQL_DELETE =
-        "DELETE FROM users "
-        + "WHERE id = ?";
+      "DELETE FROM users "
+      + "WHERE id = ?";
 
   private final DataSource dataSource;
 
