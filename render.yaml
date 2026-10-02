@@ -7,18 +7,42 @@ services:
     autoDeployTrigger: commit
     healthCheckPath: /v3/api-docs
     envVars:
+      # Perfil activo: usa el adaptador PostgreSQL y el dialecto PostgreSQL
+      - key: SPRING_PROFILES_ACTIVE
+        value: postgres
+
+      # =============================================
+      # Conexion a Supabase (PostgreSQL gestionado)
+      # =============================================
+      # Valores a completar en el panel de Render (marcados con sync: false).
+      #
+      # En Supabase: Project Settings > Database > Connection string > Session pooler
+      #   DB_HOST     -> aws-0-<region>.pooler.supabase.com
+      #   DB_PORT     -> 5432
+      #   DB_NAME     -> postgres
+      #   DB_USERNAME -> postgres.<project-ref>
+      #   DB_PASSWORD -> la del proyecto (Project Settings > Database > Reset password)
+      #
+      # Usar el SESSION POOLER (puerto 5432), no el Transaction pooler (6543):
+      # el Transaction pooler no admite sentencias preparadas con nombre.
       - key: DB_HOST
         sync: false
       - key: DB_PORT
-        value: "3306"
+        value: "5432"
       - key: DB_NAME
-        value: crud_usuarios
+        value: postgres
       - key: DB_USERNAME
         sync: false
       - key: DB_PASSWORD
         sync: false
+      # Supabase exige TLS. "require" cifra sin validar el certificado;
+      # usar "verify-full" para validacion completa del certificado.
       - key: DB_SSL_MODE
-        value: REQUIRED
+        value: require
+
+      # =============================================
+      # SMTP (Gmail)
+      # =============================================
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
@@ -31,6 +55,10 @@ services:
         sync: false
       - key: SMTP_FROM_NAME
         value: Gestion de Usuarios
+
+      # =============================================
+      # Seguridad JWT
+      # =============================================
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRATION_SECONDS

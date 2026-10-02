@@ -1,4 +1,32 @@
 services:
+  # =============================================
+  # PostgreSQL — motor por defecto del proyecto
+  # =============================================
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: crud_usuarios
+      POSTGRES_USER: users_app
+      POSTGRES_PASSWORD: local_users_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # El script se ejecuta solo la primera vez que se crea el volumen.
+      - ./src/main/resources/schema-postgres.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready --host=127.0.0.1 --username=$${POSTGRES_USER} --dbname=$${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  # =============================================
+  # MySQL — se mantiene disponible para el perfil "mysql"
+  # =============================================
   mysql:
     image: mysql:8.4
     environment:
@@ -21,6 +49,9 @@ services:
       start_period: 20s
     restart: unless-stopped
 
+  # =============================================
+  # API — perfil postgres por defecto
+  # =============================================
   api:
     build:
       context: .
@@ -28,12 +59,17 @@ services:
     image: users-management-api:local
     environment:
       PORT: "8080"
-      DB_HOST: mysql
-      DB_PORT: "3306"
+      # El perfil selecciona el adaptador de persistencia Y el dialecto del DataSource
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-postgres}
+
+      # --- Conexion PostgreSQL (perfil por defecto) ---
+      DB_HOST: postgres
+      DB_PORT: "5432"
       DB_NAME: crud_usuarios
       DB_USERNAME: users_app
       DB_PASSWORD: local_users_password
-      DB_SSL_MODE: DISABLED
+      DB_SSL_MODE: disable
+
       SMTP_HOST: smtp.gmail.com
       SMTP_PORT: "587"
       SMTP_USERNAME: ${SMTP_USERNAME:-}
@@ -45,9 +81,10 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
     restart: unless-stopped
 
 volumes:
+  postgres-data:
   mysql-data:
