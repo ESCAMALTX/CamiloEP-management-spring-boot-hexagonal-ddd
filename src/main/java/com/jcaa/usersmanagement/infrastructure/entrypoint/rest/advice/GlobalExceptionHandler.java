@@ -7,6 +7,7 @@ import com.jcaa.usersmanagement.domain.exception.UserNotFoundException;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.exception.PersistenceException;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.response.ApiErrorResponse;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -65,14 +67,16 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(PersistenceException.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-  public ApiErrorResponse handlePersistence(final PersistenceException ignored) {
+  public ApiErrorResponse handlePersistence(final PersistenceException exception) {
+    log.error("Fallo de persistencia: {}", exception.getMessage(), exception);
     return new ApiErrorResponse(
         HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error de persistencia.");
   }
 
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-  public ApiErrorResponse handleGeneral(final Exception ignored) {
+  public ApiErrorResponse handleGeneral(final Exception exception) {
+    log.error("Error no controlado: {}", exception.getMessage(), exception);
     return new ApiErrorResponse(
         HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error interno del servidor.");
   }

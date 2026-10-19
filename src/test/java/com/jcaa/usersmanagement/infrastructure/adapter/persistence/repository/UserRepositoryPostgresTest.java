@@ -223,6 +223,33 @@ class UserRepositoryPostgresTest {
         () -> assertFalse(updateSql.contains("NOW()"), "no debe usar NOW() de MySQL"));
   }
 
+  @Test
+  @DisplayName("las escrituras convierten role y status a sus tipos ENUM de PostgreSQL")
+  void shouldCastEnumColumnsOnWrite() throws SQLException {
+    // Arrange
+    configureStatementAndResultSet();
+    when(resultSet.next()).thenReturn(true);
+    configureResultSetRow();
+
+    // Act
+    repository.save(userModel);
+    repository.update(userModel);
+
+    // Assert
+    final String insertSql = captureSqlContaining("INSERT INTO users");
+    final String updateSql = captureSqlContaining("UPDATE users");
+    assertAll(
+        "conversion de ENUM",
+        () -> assertTrue(insertSql.contains("CAST(? AS user_role)"), "INSERT debe convertir role"),
+        () ->
+            assertTrue(
+                insertSql.contains("CAST(? AS user_status)"), "INSERT debe convertir status"),
+        () -> assertTrue(updateSql.contains("CAST(? AS user_role)"), "UPDATE debe convertir role"),
+        () ->
+            assertTrue(
+                updateSql.contains("CAST(? AS user_status)"), "UPDATE debe convertir status"));
+  }
+
   // ══════════════════════════════════════════════════════════
   // getById()
   // ══════════════════════════════════════════════════════════
