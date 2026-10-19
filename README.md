@@ -13,19 +13,81 @@ Spring es el único *composition root*: `Main` inicia el contexto y las dependen
 
 En Windows se puede utilizar `mvnw.cmd`.
 
+## Perfiles de persistencia
+
+El perfil activo por defecto es `postgres`. Este perfil selecciona a la vez el dialecto del
+`DataSource` y el adaptador `UserRepositoryPostgres`. Para usar MySQL:
+
+```bash
+SPRING_PROFILES_ACTIVE=mysql ./mvnw spring-boot:run
+```
+
+| Script de esquema | Motor |
+| --- | --- |
+| `src/main/resources/schema-postgres.sql` | PostgreSQL (perfil por defecto y Render) |
+| `src/main/resources/schema.sql` | MySQL (perfil `mysql`) |
+
+En ambos scripts el administrador inicial es `admin@example.com` con la contraseña
+`Admin1234!`. Cambiar esa contraseña antes de exponer la API en Render.
+
+## Base de datos remota (PostgreSQL)
+
+El despliegue usa PostgreSQL en la nube. En Supabase, obtener la cadena de conexión desde
+*Project Settings > Database > Connection string > Session pooler*:
+
+* `DB_HOST`: host del **Session pooler** (`aws-0-<region>.pooler.supabase.com`).
+* `DB_PORT`: `5432`. No usar el Transaction pooler (puerto `6543`): no admite sentencias
+  preparadas con nombre.
+* `DB_NAME`: nombre de la base (en Supabase, `postgres`).
+* `DB_USERNAME`: `postgres.<project-ref>`.
+* `DB_PASSWORD`: contraseña del proyecto.
+* `DB_SSL_MODE`: `require` (o `verify-full` para validar el certificado).
+
+Ejecutar `schema-postgres.sql` una vez sobre esa base de datos para crear los tipos, la tabla
+`users`, el trigger de `updated_at` y el administrador inicial.
+
+## Docker
+
+```bash
+docker compose up --build
+```
+
+El archivo `compose.yaml` levanta PostgreSQL, ejecuta `schema-postgres.sql` al crear el volumen
+y arranca la API en `http://localhost:8080`. El servicio `mysql` del mismo archivo está pensado
+para probar el perfil `mysql`.
+
+## Correo con Gmail
+
+Las notificaciones se envían por SMTP autenticado. Para una cuenta de Gmail con verificación en
+dos pasos:
+
+1. Crear una contraseña de aplicación en <https://myaccount.google.com/apppasswords>.
+2. Configurar las variables de entorno (nunca en archivos versionados):
+
+```text
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=<correo-de-Gmail>
+SMTP_PASSWORD=<contraseña-de-aplicación>
+SMTP_FROM_ADDRESS=<correo-de-Gmail>
+SMTP_FROM_NAME=Gestion de Usuarios
+```
+
 ## Despliegue en Render
 
-El archivo `render.yaml` define el servicio web, el build con Docker y el despliegue
-automático de cada commit que llegue a la rama `main`.
+El archivo `render.yaml` define el servicio web `users-management-api`, el build con Docker, el
+perfil `postgres`, el health check y el despliegue automático de cada commit que llegue a la
+rama `main`.
 
 1. Crear un Blueprint en Render y seleccionar este repositorio.
-2. Completar en el panel los secretos marcados como requeridos: `DB_HOST`,
-   `DB_USERNAME`, `DB_PASSWORD`, `SMTP_USERNAME`, `SMTP_PASSWORD` y
-   `SMTP_FROM_ADDRESS`.
-3. Usar una instancia MySQL accesible desde Internet o desde la red privada de
-   Render y ejecutar `src/main/resources/schema.sql` una vez para crear el esquema.
-4. Desplegar el Blueprint. La API quedará disponible en el subdominio
-   `onrender.com` asignado por Render y Swagger UI en `/swagger-ui.html`.
+2. Completar en el panel de Render los secretos marcados con `sync: false`:
+   `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `SMTP_USERNAME`, `SMTP_PASSWORD` y
+   `SMTP_FROM_ADDRESS`. `JWT_SECRET` se genera automáticamente.
+3. Ejecutar `schema-postgres.sql` una vez sobre la base de datos remota.
+4. Desplegar el Blueprint. La API queda disponible en el subdominio `onrender.com` asignado por
+   Render, Swagger UI en `/swagger-ui.html` y el documento OpenAPI en `/v3/api-docs`.
+5. Probar la API desde Swagger UI: crear un usuario, iniciar sesión en `/api/auth/login` para obtener
+   el JWT y comprobar que llega el correo de notificación.
 
 Las credenciales nunca deben guardarse en `application.properties` ni en
 `render.yaml`. Para desarrollo local, deben proporcionarse como variables de entorno.
