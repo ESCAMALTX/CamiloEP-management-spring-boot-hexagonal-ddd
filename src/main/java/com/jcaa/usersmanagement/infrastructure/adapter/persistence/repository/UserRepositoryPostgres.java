@@ -41,7 +41,7 @@ import java.util.Optional;
  *   <li>La actualizacion automatica de {@code updated_at} la realiza un TRIGGER en la base de
  *       datos (ver {@code schema-postgres.sql}), por lo que la sentencia UPDATE no lo toca.
  *   <li>{@code role} y {@code status} son tipos ENUM nativos de PostgreSQL; se leen con {@code
- *       getString} igual que en MySQL.
+ *       getString} igual que en MySQL, pero al escribir se convierten con {@code CAST}
  * </ul>
  *
  * <p><b>Nota sobre {@code SELECT ... LIMIT 1}:</b> en PostgreSQL {@code LIMIT} es valido, pero se
@@ -62,14 +62,17 @@ public class UserRepositoryPostgres
         GetAllUsersPort,
         DeleteUserPort {
 
+  // role y status son tipos ENUM: el driver envia texto y PostgreSQL exige la conversion.
   private static final String SQL_INSERT =
       "INSERT INTO users "
       + "(id, name, email, password, role, status, created_at, updated_at) "
-      + "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+      + "VALUES (?, ?, ?, ?, CAST(? AS user_role), CAST(? AS user_status), "
+      + "CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
   // updated_at NO se asigna aqui: lo actualiza el trigger users_set_updated_at.
   private static final String SQL_UPDATE =
-      "UPDATE users SET name = ?, email = ?, password = ?, role = ?, status = ? "
+      "UPDATE users SET name = ?, email = ?, password = ?, "
+      + "role = CAST(? AS user_role), status = CAST(? AS user_status) "
       + "WHERE id = ?";
 
   private static final String SQL_SELECT_BY_ID =
