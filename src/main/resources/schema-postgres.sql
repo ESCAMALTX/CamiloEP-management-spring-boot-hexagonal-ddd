@@ -75,7 +75,8 @@ CREATE TRIGGER users_set_updated_at
     EXECUTE FUNCTION set_updated_at();
 
 -- ---------------------------------------------
--- Usuario administrador inicial (password: Admin1234!)
+-- Usuario administrador inicial (email: admin@example.com / password: Admin1234!)
+-- Cambiar esa contrasena antes de exponer la API en Render.
 -- ---------------------------------------------
 -- ON CONFLICT (id) DO NOTHING evita el error de clave duplicada
 -- si el script se ejecuta mas de una vez (equivalente a
@@ -85,7 +86,7 @@ VALUES (
     '00000000-0000-0000-0000-000000000001',
     'Administrador',
     'admin@example.com',
-    '$2a$12$placeholderHashReplaceWithRealBCryptHash',
+    '$2a$12$qL.zu/7CP3ghU4KZrzDWZuXR/73Y9kJcxumNvY05KPjuNX/ctI3SK',
     'ADMIN',
     'ACTIVE'
 )

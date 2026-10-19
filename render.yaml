@@ -18,7 +18,7 @@ services:
       #
       # En Supabase: Project Settings > Database > Connection string > Session pooler
       #   DB_HOST     -> aws-0-<region>.pooler.supabase.com
-      #   DB_PORT     -> 5432
+      #   DB_PORT     -> 5432 (se completa en el panel de Render)
       #   DB_NAME     -> postgres
       #   DB_USERNAME -> postgres.<project-ref>
       #   DB_PASSWORD -> la del proyecto (Project Settings > Database > Reset password)
@@ -27,8 +27,9 @@ services:
       # el Transaction pooler no admite sentencias preparadas con nombre.
       - key: DB_HOST
         sync: false
+      # 5432 para el Session pooler; 6543 solo si el pooler lo admite.
       - key: DB_PORT
-        value: "5432"
+        sync: false
       - key: DB_NAME
         value: postgres
       - key: DB_USERNAME

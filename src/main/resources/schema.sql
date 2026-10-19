@@ -20,14 +20,16 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Usuario administrador inicial (password: Admin1234!)
+-- Usuario administrador inicial (email: admin@example.com / password: Admin1234!)
+-- Cambiar esa contrasena antes de exponer la API en Render.
 INSERT INTO users (id, name, email, password, role, status)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
     'Administrador',
     'admin@example.com',
-    '$2a$12$placeholderHashReplaceWithRealBCryptHash',
+    '$2a$12$qL.zu/7CP3ghU4KZrzDWZuXR/73Y9kJcxumNvY05KPjuNX/ctI3SK',
     'ADMIN',
     'ACTIVE'
-);
+)
+ON DUPLICATE KEY UPDATE id = id;
 
