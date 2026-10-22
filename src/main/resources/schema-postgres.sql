@@ -75,6 +75,23 @@ CREATE TRIGGER users_set_updated_at
     EXECUTE FUNCTION set_updated_at();
 
 -- ---------------------------------------------
+-- Codigos de activacion de cuenta
+-- ---------------------------------------------
+-- Se guarda solo el hash SHA-256 del codigo; el valor en claro viaja unicamente
+-- por correo al usuario. Un codigo caduca y no puede reutilizarse.
+CREATE TABLE IF NOT EXISTS activation_codes (
+    id          BIGSERIAL    PRIMARY KEY,
+    user_id     VARCHAR(36)  NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    code_hash   VARCHAR(64)  NOT NULL,
+    expires_at  TIMESTAMP    NOT NULL,
+    used_at     TIMESTAMP,
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_activation_codes_user ON activation_codes (user_id);
+CREATE INDEX IF NOT EXISTS idx_activation_codes_hash ON activation_codes (code_hash);
+
+-- ---------------------------------------------
 -- Usuario administrador inicial (email: admin@example.com / password: Admin1234!)
 -- Cambiar esa contrasena antes de exponer la API en Render.
 -- ---------------------------------------------

@@ -14,6 +14,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
   private static final String AUTH_LOGIN_PATH = "/api/auth/login";
+  private static final String AUTH_REGISTER_PATH = "/api/auth/register";
+  private static final String AUTH_ACTIVATE_PATH = "/api/auth/activate";
   private static final String USERS_PATH = "/api/users";
   private static final String USERS_DETAIL_PATH = "/api/users/**";
   private static final String[] OPEN_API_PATHS = {
@@ -41,6 +43,8 @@ public class SecurityConfig {
             authorization ->
                 authorization
                     .requestMatchers(AUTH_LOGIN_PATH)
+                    .permitAll()
+                    .requestMatchers(AUTH_REGISTER_PATH, AUTH_ACTIVATE_PATH)
                     .permitAll()
                     .requestMatchers(OPEN_API_PATHS)
                     .permitAll()
