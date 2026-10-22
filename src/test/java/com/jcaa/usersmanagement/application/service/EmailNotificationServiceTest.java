@@ -98,32 +98,34 @@ class EmailNotificationServiceTest {
                         && dest.getSubject().contains("actualizada")));
   }
 
-  // ── re-lanzar EmailSenderException en notifyUserCreated
+  // ── tolerar EmailSenderException en notifyUserCreated
 
   @Test
-  @DisplayName("notifyUserCreated() re-lanza EmailSenderException cuando el puerto falla")
-  void shouldRethrowEmailSenderExceptionOnCreate() {
+  @DisplayName("notifyUserCreated() no propaga el fallo de correo: el usuario ya fue guardado")
+  void shouldNotPropagateEmailSenderExceptionOnCreate() {
     // Arrange
     final EmailSenderException cause =
         EmailSenderException.becauseSmtpFailed(EMAIL, "Connection refused");
     doThrow(cause).when(emailSenderPort).send(any());
 
     // Act & Assert
-    assertThrows(EmailSenderException.class, () -> service.notifyUserCreated(user, PASSWORD));
+    assertDoesNotThrow(() -> service.notifyUserCreated(user, PASSWORD));
+    verify(emailSenderPort).send(any());
   }
 
-  // ── re-lanzar EmailSenderException en notifyUserUpdated
+  // ── tolerar EmailSenderException en notifyUserUpdated
 
   @Test
-  @DisplayName("notifyUserUpdated() re-lanza EmailSenderException cuando el puerto falla")
-  void shouldRethrowEmailSenderExceptionOnUpdate() {
+  @DisplayName("notifyUserUpdated() no propaga el fallo de correo: el usuario ya fue guardado")
+  void shouldNotPropagateEmailSenderExceptionOnUpdate() {
     // Arrange
     final EmailSenderException cause =
         EmailSenderException.becauseSmtpFailed(EMAIL, "Connection refused");
     doThrow(cause).when(emailSenderPort).send(any());
 
     // Act & Assert
-    assertThrows(EmailSenderException.class, () -> service.notifyUserUpdated(user));
+    assertDoesNotThrow(() -> service.notifyUserUpdated(user));
+    verify(emailSenderPort).send(any());
   }
 
   // ── loadTemplate() — rama: template no encontrado (is == null)

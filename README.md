@@ -56,22 +56,29 @@ El archivo `compose.yaml` levanta PostgreSQL, ejecuta `schema-postgres.sql` al c
 y arranca la API en `http://localhost:8080`. El servicio `mysql` del mismo archivo está pensado
 para probar el perfil `mysql`.
 
-## Correo con Gmail
+## Correo transaccional (Brevo)
 
-Las notificaciones se envían por SMTP autenticado. Para una cuenta de Gmail con verificación en
-dos pasos:
+Render no permite conexiones SMTP salientes en el plan gratuito, por lo que las notificaciones se
+envían con la **API HTTPS de Brevo** (puerto 443) mediante el perfil `brevo`:
 
-1. Crear una contraseña de aplicación en <https://myaccount.google.com/apppasswords>.
-2. Configurar las variables de entorno (nunca en archivos versionados):
+1. Crear una cuenta gratuita en <https://www.brevo.com>.
+2. Verificar el remitente en *Senders & IP > Senders* (no hace falta dominio propio).
+3. Crear una API key en *SMTP & API > API Keys*.
+4. Configurar las variables de entorno:
 
 ```text
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=<correo-de-Gmail>
-SMTP_PASSWORD=<contraseña-de-aplicación>
-SMTP_FROM_ADDRESS=<correo-de-Gmail>
-SMTP_FROM_NAME=Gestion de Usuarios
+BREVO_API_KEY=<api-key-de-brevo>
+BREVO_FROM_ADDRESS=<remitente-verificado>
+BREVO_FROM_NAME=Gestion de Usuarios
 ```
+
+Con `SPRING_PROFILES_ACTIVE=postgres,brevo` se activa este adaptador. Sin ese perfil la aplicación
+usa SMTP clásico con `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`,
+`SMTP_FROM_ADDRESS` y `SMTP_FROM_NAME` (válido para desarrollo local o alojamientos con SMTP
+saliente permitido).
+
+Un fallo de correo no hace fallar la operación: el usuario ya quedó guardado y solo se registra el
+aviso en el log.
 
 ## Despliegue en Render
 
@@ -81,8 +88,8 @@ rama `main`.
 
 1. Crear un Blueprint en Render y seleccionar este repositorio.
 2. Completar en el panel de Render los secretos marcados con `sync: false`:
-   `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `SMTP_USERNAME`, `SMTP_PASSWORD` y
-   `SMTP_FROM_ADDRESS`. `JWT_SECRET` se genera automáticamente.
+   `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `BREVO_API_KEY` y
+   `BREVO_FROM_ADDRESS`. `JWT_SECRET` se genera automáticamente.
 3. Ejecutar `schema-postgres.sql` una vez sobre la base de datos remota.
 4. Desplegar el Blueprint. La API queda disponible en el subdominio `onrender.com` asignado por
    Render, Swagger UI en `/swagger-ui.html` y el documento OpenAPI en `/v3/api-docs`.

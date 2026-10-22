@@ -4,6 +4,7 @@ import com.jcaa.usersmanagement.application.port.out.EmailSenderPort;
 import com.jcaa.usersmanagement.domain.exception.EmailSenderException;
 import com.jcaa.usersmanagement.domain.model.EmailDestinationModel;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import javax.mail.Authenticator;
@@ -19,6 +20,7 @@ import java.util.Properties;
 
 @Slf4j
 @Component
+@Profile("!brevo")
 public class JavaMailEmailSenderAdapter implements EmailSenderPort {
 
   private static final String MAIL_SMTP_HOST = "mail.smtp.host";

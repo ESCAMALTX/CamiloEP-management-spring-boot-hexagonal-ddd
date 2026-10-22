@@ -7,9 +7,10 @@ services:
     autoDeployTrigger: commit
     healthCheckPath: /v3/api-docs
     envVars:
-      # Perfil activo: usa el adaptador PostgreSQL y el dialecto PostgreSQL
+      # Perfil activo: PostgreSQL + correo por la API HTTPS de Brevo.
+      # Render no permite SMTP saliente en el plan gratuito; Brevo usa HTTPS (443).
       - key: SPRING_PROFILES_ACTIVE
-        value: postgres
+        value: postgres,brevo
 
       # =============================================
       # Conexion a Supabase (PostgreSQL gestionado)
@@ -42,19 +43,14 @@ services:
         value: require
 
       # =============================================
-      # SMTP (Gmail)
+      # Correo transaccional (Brevo, API HTTPS)
       # =============================================
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: "587"
-      - key: SMTP_USERNAME
+      # La cuenta de Brevo debe tener verificado el remitente BREVO_FROM_ADDRESS.
+      - key: BREVO_API_KEY
         sync: false
-      - key: SMTP_PASSWORD
+      - key: BREVO_FROM_ADDRESS
         sync: false
-      - key: SMTP_FROM_ADDRESS
-        sync: false
-      - key: SMTP_FROM_NAME
+      - key: BREVO_FROM_NAME
         value: Gestion de Usuarios
 
       # =============================================
