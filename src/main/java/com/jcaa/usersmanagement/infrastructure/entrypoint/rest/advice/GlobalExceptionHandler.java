@@ -2,6 +2,7 @@ package com.jcaa.usersmanagement.infrastructure.entrypoint.rest.advice;
 
 import com.jcaa.usersmanagement.domain.exception.DomainException;
 import com.jcaa.usersmanagement.domain.exception.InvalidCredentialsException;
+import com.jcaa.usersmanagement.domain.exception.InvalidActivationCodeException;
 import com.jcaa.usersmanagement.domain.exception.UserAlreadyExistsException;
 import com.jcaa.usersmanagement.domain.exception.UserNotFoundException;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.exception.PersistenceException;
@@ -32,10 +33,16 @@ public class GlobalExceptionHandler {
     return new ApiErrorResponse(HttpStatus.CONFLICT.value(), exception.getMessage());
   }
 
-  @ExceptionHandler(InvalidCredentialsException.class)
-  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  @ExceptionHandler(InvalidCredentialsException.class)  @ResponseStatus(HttpStatus.UNAUTHORIZED)
   public ApiErrorResponse handleInvalidCredentials(final InvalidCredentialsException exception) {
     return new ApiErrorResponse(HttpStatus.UNAUTHORIZED.value(), exception.getMessage());
+  }
+
+  @ExceptionHandler(InvalidActivationCodeException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ApiErrorResponse handleInvalidActivationCode(
+      final InvalidActivationCodeException exception) {
+    return new ApiErrorResponse(HttpStatus.BAD_REQUEST.value(), exception.getMessage());
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
@@ -65,8 +72,7 @@ public class GlobalExceptionHandler {
     return new ApiErrorResponse(HttpStatus.BAD_REQUEST.value(), exception.getMessage());
   }
 
-  @ExceptionHandler(PersistenceException.class)
-  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  @ExceptionHandler(PersistenceException.class)  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public ApiErrorResponse handlePersistence(final PersistenceException exception) {
     log.error("Fallo de persistencia: {}", exception.getMessage(), exception);
     return new ApiErrorResponse(

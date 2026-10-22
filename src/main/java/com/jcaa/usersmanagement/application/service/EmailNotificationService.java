@@ -21,12 +21,15 @@ public class EmailNotificationService {
 
   private static final String SUBJECT_CREATED = "Tu cuenta ha sido creada — Gestion de Usuarios";
   private static final String SUBJECT_UPDATED  = "Tu cuenta ha sido actualizada — Gestion de Usuarios";
+  private static final String SUBJECT_ACTIVATION = "Activa tu cuenta — Gestion de Usuarios";
 
   private static final String TOKEN_NAME     = "name";
   private static final String TOKEN_EMAIL    = "email";
   private static final String TOKEN_PASSWORD = "password";
   private static final String TOKEN_ROLE     = "role";
   private static final String TOKEN_STATUS   = "status";
+  private static final String TOKEN_CODE     = "code";
+  private static final String TOKEN_MINUTES  = "minutes";
 
   private static final String LOG_SEND_FAILED =
       "[EmailNotificationService] correo no enviado. Causa: {}";
@@ -47,8 +50,22 @@ public class EmailNotificationService {
     sendOrLog(destination);
   }
 
-  public void notifyUserUpdated(final UserModel user) {
-    final String template = loadTemplate("user-updated.html");
+  public void notifyActivationCode(
+      final UserModel user, final String code, final long ttlMinutes) {
+    final String template = loadTemplate("user-activation.html");
+    final String body =
+        renderTemplate(
+            template,
+            Map.of(
+                TOKEN_NAME,    user.getName().value(),
+                TOKEN_EMAIL,   user.getEmail().value(),
+                TOKEN_CODE,    code,
+                TOKEN_MINUTES, Long.toString(ttlMinutes)));
+    final EmailDestinationModel destination = buildDestination(user, SUBJECT_ACTIVATION, body);
+    sendOrLog(destination);
+  }
+
+  public void notifyUserUpdated(final UserModel user) {    final String template = loadTemplate("user-updated.html");
     final String body =
         renderTemplate(
             template,

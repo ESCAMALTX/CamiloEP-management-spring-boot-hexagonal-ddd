@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.jcaa.usersmanagement.application.port.in.ActivateAccountUseCase;
 import com.jcaa.usersmanagement.application.port.in.LoginUseCase;
+import com.jcaa.usersmanagement.application.port.in.RegisterUserUseCase;
 import com.jcaa.usersmanagement.application.service.dto.command.LoginCommand;
 import com.jcaa.usersmanagement.domain.enums.UserRole;
 import com.jcaa.usersmanagement.domain.enums.UserStatus;
@@ -28,6 +30,8 @@ class AuthRestControllerTest {
   private static final String PASSWORD = "SecurePass1";
 
   @Mock private LoginUseCase loginUseCase;
+  @Mock private RegisterUserUseCase registerUserUseCase;
+  @Mock private ActivateAccountUseCase activateAccountUseCase;
   @Mock private JwtTokenService jwtTokenService;
 
   @Test
@@ -38,7 +42,9 @@ class AuthRestControllerTest {
     when(loginUseCase.execute(command)).thenReturn(user);
     when(jwtTokenService.generate(user)).thenReturn("signed.jwt.token");
     when(jwtTokenService.expirationSeconds()).thenReturn(900L);
-    final AuthRestController controller = new AuthRestController(loginUseCase, jwtTokenService);
+    final AuthRestController controller =
+        new AuthRestController(
+            loginUseCase, registerUserUseCase, activateAccountUseCase, jwtTokenService);
 
     // Act
     final LoginRestResponse response =

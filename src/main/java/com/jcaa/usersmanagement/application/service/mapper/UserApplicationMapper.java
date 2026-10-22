@@ -2,6 +2,7 @@ package com.jcaa.usersmanagement.application.service.mapper;
 
 import com.jcaa.usersmanagement.application.service.dto.command.CreateUserCommand;
 import com.jcaa.usersmanagement.application.service.dto.command.DeleteUserCommand;
+import com.jcaa.usersmanagement.application.service.dto.command.RegisterUserCommand;
 import com.jcaa.usersmanagement.application.service.dto.command.UpdateUserCommand;
 import com.jcaa.usersmanagement.application.service.dto.query.GetUserByIdQuery;
 import com.jcaa.usersmanagement.domain.enums.UserRole;
@@ -17,13 +18,21 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class UserApplicationMapper {
 
-  public UserModel fromCreateCommandToModel(final CreateUserCommand command) {
-    return UserModel.create(
+  public UserModel fromCreateCommandToModel(final CreateUserCommand command) {    return UserModel.create(
         new UserId(command.id()),
         new UserName(command.name()),
         new UserEmail(command.email()),
         UserPassword.fromPlainText(command.password()),
         UserRole.fromString(command.role()));
+  }
+
+  public UserModel fromRegisterCommandToModel(final String id, final RegisterUserCommand command) {
+    return UserModel.create(
+        new UserId(id),
+        new UserName(command.name()),
+        new UserEmail(command.email()),
+        UserPassword.fromPlainText(command.password()),
+        UserRole.MEMBER);
   }
 
   public UserModel fromUpdateCommandToModel(
