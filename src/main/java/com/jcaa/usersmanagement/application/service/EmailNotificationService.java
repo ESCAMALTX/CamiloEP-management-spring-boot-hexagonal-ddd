@@ -93,12 +93,14 @@ public class EmailNotificationService {
     return result;
   }
 
+  /**
+   * Un fallo de correo no debe invalidar la operacion ya guardada: se registra y se continua.
+   */
   private void sendOrLog(final EmailDestinationModel destination) {
     try {
       emailSenderPort.send(destination);
     } catch (final EmailSenderException senderException) {
       log.warn(LOG_SEND_FAILED, senderException.getMessage(), senderException);
-      throw senderException;
     }
   }
 }
